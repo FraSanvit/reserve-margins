@@ -1,0 +1,12 @@
+name: calliope-res-margins
+
+channels:
+    - conda-forge
+    - gurobi
+dependencies:
+    - python=3.8
+    - gurobi=9.5
+    - calliope=0.6.10
+    - pip <= 20
+    - pip:
+        - git+https://github.com/FraSanvit/calliope.git@0.6-reserves-margins
