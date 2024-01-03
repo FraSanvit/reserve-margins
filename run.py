@@ -44,22 +44,6 @@ def run_model(path_to_model, path_to_output):
     
     return (new_model,duals,model)
 
-"""
-def run_model(path_to_model, path_to_output):
-
-    calliope.set_log_verbosity("info", include_solver_output=True, capture_warnings=True)
-    model = calliope.read_netcdf(path_to_model)
-
-    model = update_constraint_sets(model)
-
-    model.run(build_only=True)
-    
-    model._backend_model.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT)
-    add_eurocalliope_constraints(model)
-    
-    model.to_netcdf("prova.nc")
-    # return (model)
-"""
 def update_constraint_sets(model):
 
     if "energy_cap_max_time_varying" in model._model_data.data_vars:
@@ -257,8 +241,9 @@ def add_eurocalliope_constraints(model):
         print("Building storage_ev_constraint")
         add_storage_ev_constraint(model)
     if any(var.startswith("cap_value") for var in model._model_data.data_vars):
-        print("Building cap_value_constraint")
-        add_cap_value_constraint(model)
+        print("cap_value_constraint is not built - Check run.py file") # testing
+        # print("Building cap_value_constraint")
+        # add_cap_value_constraint(model)
 
 def equalizer(lhs, rhs, sign):
     if sign == "max":
@@ -547,7 +532,6 @@ def add_storage_ev_constraint(model):
             backend_model.demand_share_per_timestep_decision[loc_tech_carrier].value
         except KeyError:
             return po.Constraint.Skip
-        # print(loc_tech_carrier)  
         return backend_model.storage_cap[loc_tech] <= ( backend_model.demand_share_per_timestep_decision[loc_tech_carrier] * storage_cap_max )
                 
     model.backend.add_constraint(
@@ -560,7 +544,6 @@ def add_cap_value_constraint(model):
     def _cap_value_rule(backend_model, loc_tech, timestep):
         
         cap_value = get_param(backend_model, "cap_value", (loc_tech,timestep))
-        # print(cap_value)
         
         if invalid(cap_value):
             return po.Constraint.Skip
@@ -578,41 +561,6 @@ def add_cap_value_constraint(model):
         ["loc_tech_cap_value_constraint", "timesteps"],
         _cap_value_rule
     )
-
-def add_target_reserve_share_constraint(model):
-    def _target_reserve_share_rule(backend_model, group_name, what):
-        """
-        Enforces carrier_prod for groups of technologies and locations,
-        as a sum over the entire model period. UPDATE
-    
-        .. container:: scrolling-wrapper
-    
-            .. math:: UPDATE
-    
-                \\sum_{loc::tech::carrier \\in given\\_group, timestep \\in timesteps} carrier_{prod}(loc::tech::carrier, timestep) \\leq carrier_prod_max
-    
-        """
-        limit = get_param(backend_model, f"group_target_reserve_share_{what}", (group_name))
-    
-        if invalid(limit):
-            return return_noconstraint("target_reserve_share", group_name)
-        else:
-            lhs_loc_tech_carriers = get_group_lhs_loc_tech_carriers(
-                backend_model, group_name
-            )
-    
-            lhs = sum(
-                backend_model.carrier_prod[loc_tech_carrier, timestep]
-                for loc_tech_carrier in lhs_loc_tech_carriers
-                for timestep in backend_model.timesteps
-            )
-            return equalizer(lhs, limit, what)
-
-        model.backend.add_constraint(
-            "target_reserve_share_constraint",
-            ["loc_tech_cap_value_constraint", "timesteps"],
-            _target_reserve_share_rule
-        )
 
 def return_noconstraint(*args):
     logger = logging.getLogger(__name__)
