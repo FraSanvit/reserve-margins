@@ -1,28 +1,40 @@
 group_constraints:
 
+    reserve_margin_1:
+        techs: [ccgt]
+        locs: [N1]
+        target_reserve_share_min:
+            electricity: 0.50  # (+50%)
+
     # reserve_margin_1:
-    #     techs: [wind_offshore, wind_onshore_monopoly, ccgt]
-    #     locs: [N1,N4]
-    #     target_reserve_share_min:
-    #         electricity: 0.20  # (%)
-
-    reserve_margin_2:
-        techs: [open_field_pv, wind_onshore_monopoly]
-        locs: [N3]
-        target_reserve_abs_operating_min:
-            electricity: file=operating-reserve-target.csv:reserve_margin_2  # (%)  0.2              
-
-    # reserve_margin_2:
-    #     techs: [open_field_pv, wind_onshore_monopoly]
-    #     locs: [N3]
+    #     techs: [ccgt]
+    #     locs: [N1]
     #     target_reserve_share_operating_min:
-    #         electricity: # file=operating-reserve-target.csv  # (%)  0.2          
+    #         electricity: 15.5 #file=operating-reserve-target.csv:reserve_margin_2  # (%)  0.2              
 
-    # reserve_margin_2:
-    #     techs: [ccgt, open_field_pv]
-    #     locs: [N3]
+    # reserve_margin_1:
+    #     techs: [ccgt]
+    #     locs: [N1]
+    #     target_reserve_share_operating_min:
+    #         electricity: 0.2 #file=operating-reserve-target.csv:reserve_margin_2   # (%)  0.2          
+
+    # reserve_margin_1:
+    #     techs: [ccgt]
+    #     locs: [N1]
+    #     target_reserve_abs_operating_min:
+    #         electricity: file=operating-reserve-target.csv:reserve_margin_2   # (%)  0.2 
+
+    # reserve_margin_2: # the name of the reserve margin has to match the csv column name
+    #     techs: [ccgt]
+    #     locs: [N1]
+    #     target_reserve_adder_operating_min:
+    #         electricity: file=operating-reserve-target-adder.csv:reserve_margin_2
+
+    # reserve_margin_1:
+    #     techs: [ccgt]
+    #     locs: [N1]
     #     target_reserve_abs_min:
-    #         electricity: 0.040  # (100'000 MW)            
+    #         electricity: 17.0 # (100'000 MW)            
 
     # reserve_margin_3:
     #     techs: [open_field_pv, wind_onshore_monopoly]

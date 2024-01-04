@@ -18,7 +18,7 @@ import ntpath
 
 time_resolution ='1' # hours
 model_year = '2018'
-mode = "operating_adder"
+mode = "scenario1"
 
 # SCENARIO DEFINITION
 
@@ -64,7 +64,6 @@ model_input = calliope.read_netcdf(path_to_netcdf_of_model_inputs)
 
 backend_model.to_lp(f"lp-files/model-{mode}.lp")
 
-
-backend_model._model_data["cap_value"].to_pandas()
-backend_model._model_data.coords
-backend_model._model_data.coords["loc_tech_cap_value_constraint"].values
+# backend_model._model_data["cap_value"].to_pandas()
+# backend_model._model_data.coords
+# backend_model._model_data.coords["loc_tech_cap_value_constraint"].values

@@ -12,7 +12,7 @@ tech_groups:
         essentials:
             parent: pv
         constraints:
-            cap_value: 0.4 # 1.0 
+            cap_value: 1.0 
         costs:
             monetary:
                 energy_cap: 50.5 # (10,000 EUR2015/MW) | Danish energy agency (technology data for el/dh, average of 22 photovoltaics small and medium, 2050)
@@ -24,7 +24,7 @@ tech_groups:
             carrier: electricity
             parent: supply
         constraints:
-            cap_value: 0.6 #  1.0
+            cap_value: 1.0
             
     wind_onshore:
         essentials:
@@ -51,7 +51,7 @@ techs:
         constraints:
             energy_eff: 0.53
             lifetime: 25
-            cap_value: 0.95 # 1.0
+            cap_value: 1.0
         costs:
             monetary:
                 # GBP2018 to EUR2018 = 1.1301, EUR2018 to EUR2015 = 0.96
@@ -91,7 +91,7 @@ techs:
             energy_eff: 0.9273  # 0.86 round trip efficiency
             storage_loss: 0  # No loss over time assumed
             lifetime: 10
-            energy_cap_per_storage_cap_min: 0.166666667 # max 6h full-power discharge
+            energy_cap_per_storage_cap_min: 0.25 # max 4h full-power discharge
             # operating_reserve: file=operating-reserve-target.csv    
         costs:
             monetary:
@@ -177,7 +177,7 @@ techs:
             # cb: 2.2  # back-pressure ratio
             # cv: 0.15  # (electricity_cap - electricity_prod) / (heat_prod)
             lifetime: 25
-            cap_value: 0.9 # 1.0
+            cap_value: 1.0
             carrier_ratios:
                 carrier_out:
                     electricity: 2
