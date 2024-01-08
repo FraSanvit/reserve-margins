@@ -1,13 +1,12 @@
 ### Introduction ###
 
-This repo is intended to test and further dig into the effects of introducing newly implemented reserve margins on the modelled energy systems.
-The formulation of the reserve margins is hard-coded into a branch of Calliope [(here)](https://github.com/FraSanvit/calliope/tree/0.6-reserves-margins).
+This repository is designed to test and delve deeper into the impacts of introducing newly implemented reserve margins on modeled energy systems. The formulation of the reserve margins is hardcoded into a branch of Calliope, accessible [(here)](https://github.com/FraSanvit/calliope/tree/0.6-reserves-margins).
 
 If you want to contribute consider the [PR](https://github.com/calliope-project/calliope/pull/517) in the Calliope project repository.
 
 ### Features of reserve margins ###
 
-Two categories of reserve margins are implemented, namely: (i) planning reserve and (ii) operating reserve. Each type has different modes depending on how the requirements are defined.
+Two categories of reserve margins are implemented, namely: (i) planning reserve and (ii) operating reserve. Each type has different modes based on how the requirements are defined.
 
 1. Planning reserve
     * Percentage of the system peak
@@ -46,9 +45,10 @@ techs:
             lifetime: 25
             cap_value: file=cap-values-ccgt.csv
 ```
-As already mentioned, `cap_value` can be also a constant value of the time horizon.
+As mentioned earlier, `cap_value` can also be a constant value for the entire time horizon.
 
-Likewise, the `operating_reserve` can be a timeseries or a constant value and it represents the additional requirement due to the capacity or generation values of specific technologies. It is usually defined as a share of the installed capacity or generation.
+Similarly, `operating_reserve` can be either a time series or a constant value, representing the additional requirement due to the capacity or generation values of specific technologies. It is typically defined as a proportion of the installed capacity or generation.
+
 ```
 techs:
     open_field_pv:
@@ -62,7 +62,7 @@ techs:
             operating_reserve: file=operating-reserve-open-field-pv.csv
 ```
 
-The reserve margins are implemented as group constraints and they do follow the same structure. The new feature of reserve margin group constraints consists of the possibility to input timeseries as targets (in the operating mode only).
+The reserve margins are implemented as group constraints and follow the same structure. The new feature of reserve margin group constraints includes the option to input timeseries as targets (in the operating mode only).
 
 **Planning reserve - percentage of the system peak**
 
@@ -76,7 +76,7 @@ group_constraints:
         target_reserve_share_min:
             electricity: 0.50
 ```
-In the given example, the target reserve requirement is set to be an additional +50% of the installed capacity, compared to what would have been necessary if reserve margins were not implemented.
+In this example, the target reserve requirement is defined to be an extra +50% of the installed capacity. This is in addition to what would have been required if reserve margins were not implemented.
 
 **Planning reserve - absolute adder to the system peak**
 
@@ -92,7 +92,7 @@ group_constraints:
 
 **Planning reserve - absolute value**
 
-The target reserve is equal to an absolute value expressed in capacity units. This constraint might look similar to setting a minimum value of capcity deployment but indeed it includes also the effect of the capacity values.
+The target reserve is specified as an absolute value, expressed in capacity units. While this constraint may resemble setting a minimum capacity deployment, it actually encompasses the impact of both the capacity values and the specified absolute value.
 ```
 group_constraints:
     reserve_margin_1:
@@ -104,10 +104,11 @@ group_constraints:
 
 **Operating reserve - percentage of the net load**
 
-All operating targets are composed by an additional term, besides the load, that consists of extra requirements expressed as a share of generating capacity or energy production. This terms is the one introduced in the new constraint `operating_reserve`. The operatign reserve can be defined for each technology and location.
+All operating targets consist of an additional term, in addition to the load, representing extra requirements expressed as a proportion of generating capacity or energy production. This term is introduced through the new constraint `operating_reserve`, which can be defined for each technology and location.
 
-In this specific case, the load is multiplied by a factor (1 + `% of the net laod`) where the `% of the net laod` is introduced as follows:
+In this specific case, the load is multiplied by a factor of (1 + `% of the net laod`) where the `% of the net laod` is introduced as follows:
 ```
+group_constraints:
     reserve_margin_1:
         techs: [ccgt, open_field_pv]
         locs: [N1]
@@ -119,6 +120,7 @@ In this specific case, the load is multiplied by a factor (1 + `% of the net lao
 
 In the absolute adder mode, the target reserve is increased by an amount of capacity expressed in capacity units.
 ```
+group_constraints:
     reserve_margin_1:
         techs: [ccgt, open_field_pv]
         locs: [N1]
@@ -130,6 +132,7 @@ In the absolute adder mode, the target reserve is increased by an amount of capa
 
 In the absolute mode, the target reserve is equal to a fixed capacity amount expressed in capacity units.
 ```
+group_constraints:
     reserve_margin_1:
         techs: [ccgt, open_field_pv]
         locs: [N1]
@@ -137,4 +140,4 @@ In the absolute mode, the target reserve is equal to a fixed capacity amount exp
             electricity: file=operating-reserve-target.csv:reserve_margin_1 # (MW)
 ```
 
-**[WARNING]:** When you use timeseries inputs for operating reserve targets, you must provide the specific column of the file. The column has to reflect the name of the group constraint.
+**[WARNING]:** When using timeseries inputs for operating reserve targets, you need to specify the particular column in the file. The column must correspond to the name of the group constraint.
