@@ -19,7 +19,7 @@ Two categories of reserve margins are implemented, namely: (i) planning reserve 
     * Absolute value
 
 <p align="center">
-<img src="https://github.com/FraSanvit/reserve-margins/blob/master/docs/new_group_constraint_names.png" width="1200">
+<img src="https://github.com/FraSanvit/reserve-margins/blob/master/docs/new_group_constraint_names.png" width="600">
 </p>
   
 Along these modes, two extra constraint features have been introduced:
@@ -27,7 +27,7 @@ Along these modes, two extra constraint features have been introduced:
 2. `operating reserve` targets or generation/capacity target additions (only in the operating reserve)
 
 <p align="center">
-<img src="https://github.com/FraSanvit/reserve-margins/blob/master/docs/new_constraint_names.png" width="1200">
+<img src="https://github.com/FraSanvit/reserve-margins/blob/master/docs/new_constraint_names.png" width="600">
 </p>
 
 ### Reserve margins in Calliope ###
