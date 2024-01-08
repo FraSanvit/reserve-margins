@@ -1,0 +1,132 @@
+import:
+    - 'model_config/interest-rate.yaml'
+    - 'model_config/reserve-margins.yaml'
+#    - '../renewable-techs.yaml'
+#    - '../storage-techs.yaml'
+    - 'model_config/link-techs.yaml'
+#    - '../heat-techs.yaml'
+#    - '../transformation-techs.yaml'
+#    - '../transport-techs.yaml'
+#    - '../demand-techs.yaml'
+#    - '../legacy-techs.yaml'
+#    - '../spores.yaml'
+#    - '../ccs-techs.yaml'
+#    - '../overrides-2030/renewable-techs.yaml'
+#    - '../overrides-2030/storage-techs.yaml'
+#    - '../overrides-2030/heat-techs.yaml'
+#    - '../overrides-2030/transformation-techs.yaml'
+#    - '../overrides-2030/ccs-techs.yaml'
+#    - '../config_overrides.yaml'
+    - 'model_config/locations.yaml'    
+    - 'model_config/techs.yaml'
+#    - './links.yaml'
+#    - './directional-rooftop.yaml'
+#    - './vehicle_group_constraints_2018.yaml'
+#    - './heat_group_constraints_2018.yaml'
+#    - './fuel_group_constraints_2018.yaml'
+#    - './emissions-scenarios.yaml'
+#    - './gas_storage.yaml'
+#    - './coal_supply.yaml'
+#    - './fossil-fuel-supply.yaml'
+#    - './fuel-distribution.yaml'
+#    - './biofuel-supply-2018.yaml'
+#    - './biogas-supply-2018.yaml'    
+#    - './ccs_group_constraints.yaml'
+#    - './co2-compensation.yaml'
+#    - './charging_constraints.yaml'
+#    - './transport_group_constraints_2018.yaml'
+#    - '../extra-transport-techs.yaml'
+#    - '../overrides-v2g/charging-cost.yaml'
+#    - '../charging-techs.yaml'
+#    - '../charging-tech-limits.yaml'
+
+    
+model:
+    name: 'Euro-Calliope'
+    calliope_version: 0.6.8
+    timeseries_data_path: 'timeseries'
+    subset_time: ['2018-01-01', '2018-01-31']
+run:
+    solver: cbc #gurobi
+    # solver_options:
+        # Threads: 6
+        # Method: 2
+        # Crossover: 0
+        # BarConvTol: 1e-4
+        # BarHomogeneous: 1
+        # BarIterLimit: 3000
+        # OptimalityTol: 1e-4
+        # FeasibilityTol: 1e-4
+    ensure_feasibility: false  # Switches on the "unmet demand" constraint (false, true)
+    bigM: 1e6  # Sets the scale of unmet demand, which cannot be too high, otherwise the optimisation will not converge
+    zero_threshold: 1e-10  # Any value coming out of the backend that is smaller than this (due to floating point errors, probably) will be set to zero
+    mode: plan  # Choices: plan, operate
+    # operation:
+        # horizon: 48
+        # window: 24
+    objective_options:
+        # cost_class: {'monetary': 1, 'co2': 0, 'nos_score': 0, 'excl_score': 0}
+        cost_class: {'monetary': 1}
+    relax_constraint.demand_share_per_timestep_decision_main_constraint: 0.05
+overrides:
+    no-hydro-costs:
+        # Because we force all hydro to current levels, there
+        # should be annual O&M costs and variable costs only.
+        techs.pumped_hydro.costs.monetary.storage_cap: 0
+        techs.pumped_hydro.costs.monetary.energy_cap: 0
+        techs.hydro_run_of_river.costs.monetary.energy_cap: 0
+        techs.hydro_run_of_river.costs.monetary.om_con: 0
+        techs.hydro_reservoir.costs.monetary.storage_cap: 0
+        techs.hydro_reservoir.costs.monetary.energy_cap: 0
+        techs.hydro_reservoir.costs.monetary.om_con: 0
+    stylised-storage:
+        # Transform battery and hydrogen to stylised short term
+        # and long term storage solutions.
+        techs:
+            load_shedding.exists: False
+            battery:
+                constraints:
+                    energy_cap_per_storage_cap_min: 0.25 # max 4h full-power discharge
+                costs:
+                    monetary:
+                        om_prod: 0 # ASSUME 0 instead of 0.000378 €/kWh, as the tiny number causes numerical issues
+            hydrogen_storage:
+                constraints:
+                    energy_cap_per_storage_cap_max: 0.25 # min 4h full-power discharge
+
+    res_1h:
+        model.time: null
+
+    res_2h:
+        model.time:
+            function: resample
+            function_options.resolution: 2H
+    res_3h:
+        model.time:
+            function: resample
+            function_options.resolution: 3H
+    res_6h:
+        model.time:
+            function: resample
+            function_options.resolution: 6H
+    res_12h:
+        model.time:
+            function: resample
+            function_options.resolution: 12H
+    res_24h:
+        model.time:
+            function: resample
+            function_options.resolution: 24H         
+    res_72h:
+        model.time:
+            function: resample
+            function_options.resolution: 72H               
+    res_144h:
+        model.time:
+            function: resample
+            function_options.resolution: 144H
+            
+    res_219h:
+        model.time:
+            function: resample
+            function_options.resolution: 219H

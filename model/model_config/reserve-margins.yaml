@@ -40,26 +40,4 @@ group_constraints:
     #     techs: [open_field_pv, wind_onshore_monopoly]
     #     locs: [N2,N3]
     #     target_reserve_adder_min:
-    #         electricity: 0.060  # (100'000 MW) 
-
-#    min_prod:
-#        techs: [wind_offshore, wind_onshore_monopoly,chp_methane_extraction]
-#        locs: [N1, N2, N3, N4]
-#        carrier_prod_min:
-#            electricity: 50.00 # (100'000 MWh)
-
-#    min_ccgt:
-#        techs: [ccgt]
-#        locs: [N3]
-#        energy_cap_min: 0.10 # (100'000 MW)      
-
-#    min_share_vres:
-#        techs: [open_field_pv, wind_onshore_monopoly, wind_offshore]
-#        locs: [N1, N2, N3, N4]
-#        carrier_prod_share_min:
-#            electricity: 0.80            
-    
-#    min_wind:
-#        techs: [wind_offshore, wind_onshore_monopoly, open_field_pv, ccgt]
-#        locs: [N1, N2, N3, N4]
-#        energy_cap_min: 0.65 # (100'000 MW)                
+    #         electricity: 0.060  # (100'000 MW)            
