@@ -28,7 +28,7 @@ Along these modes, two extra constraint features are introduced:
    * `operating reserve capacity` (operating_reserve_cap)
 
 <p align="center">
-<img src="https://github.com/FraSanvit/reserve-margins/blob/main/docs/new_constraint_names.png" width="600">
+<img src="https://github.com/FraSanvit/reserve-margins/blob/main/docs/new_constraint_names_v1.png" width="600">
 </p>
 
 First of all, the derating factors applied to the capacities can be defined in the following way:
