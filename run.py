@@ -16,7 +16,7 @@ from calliope.backend.pyomo.util import (
 )
 
 
-def run_model(path_to_model, path_to_output):
+def run_model(path_to_model, path_to_output, max_fuel_import):
 
     calliope.set_log_verbosity("info", include_solver_output=True, capture_warnings=True)
     model = calliope.read_netcdf(path_to_model)
@@ -26,7 +26,7 @@ def run_model(path_to_model, path_to_output):
     model.run(build_only=True)
     
     # model._backend_model.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT)
-    add_eurocalliope_constraints(model)
+    add_eurocalliope_constraints(model, max_fuel_import)
     model._backend_model.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT)
     new_model = model.backend.rerun()
     
@@ -66,6 +66,28 @@ def update_constraint_sets(model):
                 in model._model_data[_set].values
                 if loc_tech_carrier.rsplit("::", 1)[0] not in
                 model._model_data.loc_tech_carrier_production_max_time_varying_constraint
+            ]
+
+    if "energy_cap_max_time_varying_con" in model._model_data.data_vars:
+        print("Adding consumption_max_time_varying constraint set")
+        model._model_data.coords["loc_tech_carrier_consumption_max_time_varying_constraint"] = [
+            loc_tech for loc_tech in model._model_data.loc_techs.values
+            if model.inputs.energy_cap_max_time_varying_con.loc[{"loc_techs": loc_tech}].notnull().all()
+        ]
+        print(
+            f"{len( model._model_data.loc_tech_carrier_consumption_max_time_varying_constraint)}"
+            " items in set"
+        )
+        for _set in [
+            "loc_tech_carriers_carrier_consumption_max_constraint",
+            "loc_techs_carrier_production_max_conversion_plus_constraint" # FIXME: I don't know why loc_techs_carrier_consumption_max_conversion_plus_constraint doesn't work
+        ]:
+            print(f"Removing consumption_max_time_varying loc::techs from {_set}")
+            model._model_data.coords[_set] = [
+                loc_tech_carrier for loc_tech_carrier
+                in model._model_data[_set].values
+                if loc_tech_carrier.rsplit("::", 1)[0] not in
+                model._model_data.loc_tech_carrier_consumption_max_time_varying_constraint
             ]
            
     if "passenger_car_ev_battery" in model._model_data.techs:
@@ -214,11 +236,14 @@ def update_constraint_sets(model):
     return model
 
 
-def add_eurocalliope_constraints(model):
+def add_eurocalliope_constraints(model, max_fuel_import):
 
     if "energy_cap_max_time_varying" in model._model_data.data_vars:
         print("Building production_max_time_varying constraint")
         add_production_max_time_varying_constraint(model)
+    if "energy_cap_max_time_varying_con" in model._model_data.data_vars:
+        print("Building consumption_max_time_varying constraint")
+        add_consumption_max_time_varying_constraint(model)        
     if "cb" in model._model_data.data_vars:
         print("Building chp_cb constraint")
         add_chp_cb_constraint(model)
@@ -277,6 +302,10 @@ def add_production_max_time_varying_constraint(model):
             loc_tech_carriers_out = [
                 model_data_dict["lookup_loc_techs_conversion"]["out", loc_tech]
             ]
+        elif loc_tech in backend_model.loc_techs_storage:
+            loc_tech_carriers_out = [
+                model_data_dict["lookup_loc_techs"][loc_tech]
+            ]            
         else:
             loc_tech_carriers_out = [
                 model_data_dict["lookup_loc_techs"]["out", loc_tech]
@@ -294,6 +323,51 @@ def add_production_max_time_varying_constraint(model):
         "carrier_production_max_time_varying_constraint",
         ["loc_tech_carrier_production_max_time_varying_constraint", "timesteps"],
         _carrier_production_max_time_varying_constraint_rule,
+    )
+    
+def add_consumption_max_time_varying_constraint(model):
+
+    def _carrier_consumption_max_time_varying_constraint_rule(
+        backend_model, loc_tech, timestep
+    ):
+        """
+        Set maximum carrier production for technologies with time varying maximum capacity
+        """
+        energy_cap_max = backend_model.energy_cap_max_time_varying_con[loc_tech, timestep]
+
+        if invalid(energy_cap_max):
+            return po.Constraint.Skip
+        model_data_dict = backend_model.__calliope_model_data["data"]
+        timestep_resolution = backend_model.timestep_resolution[timestep]
+        if loc_tech in backend_model.loc_techs_conversion_plus:
+            loc_tech_carriers_in = split_comma_list(
+                model_data_dict["lookup_loc_techs_conversion_plus"]["in", loc_tech]
+            )
+        elif loc_tech in backend_model.loc_techs_conversion:
+            loc_tech_carriers_in = [
+                model_data_dict["lookup_loc_techs_conversion"]["in", loc_tech]
+            ]
+        elif loc_tech in backend_model.loc_techs_storage:
+            loc_tech_carriers_in = [
+                model_data_dict["lookup_loc_techs"][loc_tech]
+            ]
+        else:
+            loc_tech_carriers_in = [
+                model_data_dict["lookup_loc_techs"]["in", loc_tech]
+            ]
+
+        carrier_con = sum(
+            backend_model.carrier_con[loc_tech_carrier, timestep]
+            for loc_tech_carrier in loc_tech_carriers_in
+        )
+        return (-1) * carrier_con <= (
+            backend_model.energy_cap[loc_tech] * timestep_resolution * energy_cap_max
+        )
+
+    model.backend.add_constraint(
+        "carrier_consumption_max_time_varying_constraint",
+        ["loc_tech_carrier_consumption_max_time_varying_constraint", "timesteps"],
+        _carrier_consumption_max_time_varying_constraint_rule,
     )
 
 
@@ -561,6 +635,84 @@ def add_cap_value_constraint(model):
         ["loc_tech_cap_value_constraint", "timesteps"],
         _cap_value_rule
     )
+
+def add_fuel_import_constraint(model, max_fuel_import):
+    def _fuel_import_constraint_rule(backend_model): # max_fuel_import
+        """
+        Max aggregated fuel imports as a share of the aggreagted fuel export and consumption in N3
+        """
+
+        loc = "N3"
+        
+        supply_fossil = [
+            "coal_supply", "oil_supply", "methane_supply",
+            "kerosene_supply", "methanol_supply",
+            "diesel_supply"
+        ]
+        
+        carriers_fossil = [
+            tech.rsplit("_",1)[0]
+            for tech in supply_fossil
+        ]
+        
+        loc_tech_distribution_carriers_prod = [
+            loc_tech_carrier
+            for loc_tech_carrier in backend_model.loc_tech_carriers_prod
+            if "distribution" in loc_tech_carrier
+            if loc_tech_carrier.startswith(loc)
+        ]
+        
+        loc_tech_supply_carriers_prod = [
+            loc_tech_carrier
+            for loc_tech_carrier in backend_model.loc_tech_carriers_prod
+            if any(tech in loc_tech_carrier for tech in supply_fossil)
+            if loc_tech_carrier.startswith(loc)
+        ]
+        
+        if not (loc_tech_distribution_carriers_prod + loc_tech_supply_carriers_prod):
+            print("fuel_import_constraint not built")
+            return po.Constraint.Skip
+        
+        carriers_fuel = [
+            loc_tech_carrier.rsplit("::", 1)[-1]
+            for loc_tech_carrier in loc_tech_distribution_carriers_prod  
+        ]
+        
+        loc_tech_fuel_con = [
+            loc_tech_carrier
+            for loc_tech_carrier in backend_model.loc_tech_carriers_con
+            if any(carrier in loc_tech_carrier for carrier in (carriers_fuel + carriers_fossil))
+            if loc_tech_carrier.rsplit("::", 1)[0] not in backend_model.loc_techs_storage
+            if loc_tech_carrier.startswith(loc)
+        ]
+        
+        fuel_con = -1 * sum(
+            backend_model.carrier_con[loc_tech_carrier, timestep]
+            for timestep in backend_model.timesteps
+            for loc_tech_carrier in loc_tech_fuel_con
+        )
+        
+        fuel_import = sum(
+            backend_model.carrier_prod[loc_tech_carrier, timestep]
+            for timestep in backend_model.timesteps
+            for loc_tech_carrier in (loc_tech_distribution_carriers_prod + loc_tech_supply_carriers_prod)       
+        )
+        
+        print("fuel_con: ")
+        print(fuel_con)
+        
+        print("fuel_import: ")
+        print(fuel_import)
+        
+        # return equalizer(fuel_import, fuel_con * max_fuel_import, "max")
+        return equalizer(fuel_import, max_fuel_import, "max")
+    
+    model.backend.add_constraint(
+        "fuel_import_constraint",
+        [],
+        _fuel_import_constraint_rule,
+    )
+
 
 def return_noconstraint(*args):
     logger = logging.getLogger(__name__)
