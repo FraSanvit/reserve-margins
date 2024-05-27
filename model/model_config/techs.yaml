@@ -6,6 +6,7 @@ tech_groups:
             parent: supply
         constraints:
             lifetime: 25 # [@JRC:2014] Table 7
+            cap_value: 0.45
 
 
     pv_on_roof:
@@ -34,7 +35,8 @@ tech_groups:
             resource: file=capacityfactors-wind-onshore.csv
             resource_unit: energy_per_cap
             lifetime: 25 # [@JRC:2014] Table 4  
-            cap_value: file=cap-values-wind-onshore.csv #0.5 #  1.0       
+            cap_value: 0.85 # file=cap-values-wind-onshore.csv #0.5 #  1.0 
+            operating_reserve_cap_freq: file=operating-reserve.csv      
         costs:
             monetary:
                 energy_cap: 96.0 # (10,000 EUR2015/MW) | Danish energy agency (technology data for el/dh, 20 onshore turbines, 2050)
@@ -42,6 +44,19 @@ tech_groups:
                 om_prod: 0.000122 # (10,000 EUR2015/MWh) | Danish energy agency (technology data for el/dh, 20 onshore turbines, 2050)                
 
 techs:
+    coal_power_plant:
+        essentials:
+            name: Coal-fired power plant
+            carrier_in: coal
+            carrier_out: electricity
+            parent: conversion
+        constraints:
+            lifetime: 15  # [Danish energy agency, 02 LTE existing plant, 2030]
+            energy_eff: 0.4  # https://www.ge.com/power/transform/article.transform.articles.2018.mar.come-hele-or-high-water
+        costs:
+            monetary:
+                energy_cap: 24.0  # (10,000 EUR/MW) | [Danish energy agency, 02 LTE existing plant, 2030]
+
     ccgt:  # BEIS Electricity Generation Costs (2020), CCGT H Class, 2040
         essentials:
             name: Combined cycle gas turbine
@@ -52,13 +67,25 @@ techs:
             energy_eff: 0.53
             lifetime: 25
             cap_value: 1.0
+            reserve_limit_reg: 0.2
         costs:
             monetary:
                 # GBP2018 to EUR2018 = 1.1301, EUR2018 to EUR2015 = 0.96
                 energy_cap: 65.09376000000002  # (10,000 EUR2015/MW) |
                 om_annual: 1.42121376  # (10,000 EUR2015/MW/year) |
                 om_prod:  0.00043395840000000005  # (10,000 EUR2015/MWh) |
-                
+
+    coal_supply:
+        essentials:
+            name: Coal
+            carrier: coal
+            parent: supply
+        costs:
+            monetary:
+                om_prod: 0.0030934619388146827  # (10,000 EUR2015/MWh) 0.0010934619388146827
+            co2:
+                om_prod: 0.034   # (10 tCO2/MWh)    
+                            
     methane_supply:
         essentials:
             name: Natural gas
@@ -76,7 +103,7 @@ techs:
             parent: supply
             carrier: biofuel
         constraints:
-            lifetime: 20  # arbritrarily chosen to avoid Calliope errors
+            lifetime: 20  # arbitrarily chosen to avoid Calliope errors
         costs.monetary:
             om_prod: 0.0016128374565425507 # (10,000 EUR/MWh)        
 
@@ -92,7 +119,8 @@ techs:
             storage_loss: 0  # No loss over time assumed
             lifetime: 10
             energy_cap_per_storage_cap_min: 0.25 # max 4h full-power discharge
-            # operating_reserve: file=operating-reserve-target.csv    
+            operating_reserve_freq: file=operating-reserve.csv 
+            reserve_limit_reg: 0.05
         costs:
             monetary:
                 storage_cap: 10.123820000000002 # (10,000 EUR2015/MWh), 802 $2015
@@ -110,7 +138,7 @@ techs:
             resource_area_per_energy_cap: 0.125 # (0.1 km^2/MW) from [@Gagnon:2016][@Klauser:2016][@Wirth:2017]
             resource: file=capacityfactors-open-field-pv.csv
             resource_unit: energy_per_cap
-            operating_reserve: file=operating-reserve-open-field-pv.csv
+            operating_reserve_cap_freq: file=operating-reserve-open-field-pv.csv
         costs:
             monetary:
                 energy_cap: 24.0 # (10,000 EUR2015/MW) | Danish energy agency (technology data for el/dh, 22 photovoltaics large, 2050)
@@ -154,7 +182,6 @@ techs:
             carrier: electricity
         constraints:
             resource: file=electricity-demand.csv     
-            # operating_reserve: file=operating-reserve-target.csv 
 
     demand_heat:
         essentials:
@@ -202,3 +229,51 @@ techs:
                 energy_cap: 17.178125  # (10,000 EUR2015/MW_heat) | data given per 'unit', so the equation divides each unit cost by the unit capacity; average of new/existing and SF/MF homes; TODO: modify per region based on dwelling ratio
                 om_annual: 0.9335000000000002  # (10,000 EUR2015/MW_heat/year) | average of new/existing and SFH/MFH; TODO: modify per region based on dwelling ratio
                 
+    electrolysis:  # [Danish energy agency, renewable fuels, 86-88 Electrolysers, 2050]
+        essentials:
+            name: Hydrogen by electrolysis
+            parent: conversion
+            carrier_in: electricity
+            carrier_out: hydrogen
+        constraints:
+            energy_eff: 0.7173333333333334  # average of SOEC, PEM, and Alkaline
+            lifetime: 23.333333333333332  # average of SOEC, PEM, and Alkaline
+        costs:
+            monetary:
+                interest_rate: 0.1
+                energy_cap: 60.86291306327804  # (10,000 EUR2015/MW_H2) | average of SOEC, PEM, and Alkaline
+                om_annual: 2.705592910547868  # (10,000 EUR2015/MW_H2/year) | average of SOEC, PEM, and Alkaline
+
+    hydrogen_supply:
+        essentials:
+            name: Hydrogen
+            carrier: hydrogen
+            parent: supply
+        costs:
+            monetary:
+                om_prod: 0.0030934619388146827  # (10,000 EUR2015/MWh)
+            co2:
+                om_prod: 0.022   # (10 tCO2/MWh) 
+
+    demand_hydrogen:
+        essentials:
+            name: 'Electricity demand'
+            parent: demand
+            carrier: hydrogen
+        constraints:
+            resource: file=hydrogen-demand.csv     
+
+    hydrogen_distribution_export:
+        essentials:
+            carrier: hydrogen
+            parent: demand
+        constraints:
+            resource: -.inf
+            force_resource: false    
+
+    hydrogen_distribution_import:
+        essentials:
+            carrier: hydrogen
+            parent: supply
+        constraints:
+            resource: .inf

@@ -4,24 +4,67 @@ locations:
         coordinates: {lat: 47.58739383393833, lon: 14.142454654593285}
         techs:
             demand_elec:
-            # wind_onshore_monopoly:
-            #     constraints:
-            #         energy_cap_max: 1.3708407597446444 # (100,000 MW)           
+            wind_onshore_monopoly:
+                constraints:
+                    energy_cap_max: 1.3708407597446444 # (100,000 MW)           
             ccgt:
             methane_supply:
+            hydrogen_distribution_import:
+            battery:
                     
-    # N2: # Renewable region
-    #     coordinates: {lat: 50.64111476113359, lon: 4.661176718500281}
-    #     techs:
-    #         demand_elec:
-    #         battery:
-    #             constraints:
-    #                 storage_cap_max: 0.050 # (100,000 MWh)              
-    #         open_field_pv:
-    #         ccgt:
-    #         methane_supply:
-# links:
-#     N1,N2.techs:
-#         ac_ohl_mountain_transmission:
-#             constraints:
-#             costs.monetary.energy_cap: 51.6  # (10,000 EUR/MW)
+    N2: # Renewable region
+        coordinates: {lat: 50.64111476113359, lon: 4.661176718500281}
+        techs:
+            demand_elec:
+            battery:
+                constraints:
+                    storage_cap_max: 0.350 # (100,000 MWh)
+                    # energy_cap_max_time_varying_con: file=time_varying_con.csv
+                    energy_cap_max_time_varying: file=time_varying_con.csv        
+                costs:
+                    monetary:
+                        storage_cap: 2.123820000000002 # changed (10,000 EUR2015/MWh), 802 $2015
+                        energy_cap: 2.558536000000002 # changed (10,000 EUR2015/MW), 678 $2015                        
+            open_field_pv:
+            wind_onshore_monopoly:
+            ccgt:
+            methane_supply:
+            chp_methane_extraction:
+                # constraints:
+                #     energy_cap_max_time_varying_con: 1.0
+            hydrogen_distribution_import:
+    N3:
+        coordinates: {lat: 59.64111476113359, lon: 8.661176718500281}
+        techs:
+            demand_elec:
+            battery:
+                constraints:
+                    storage_cap_max: 0.100 # (100,000 MWh)     
+            open_field_pv:
+            ccgt:
+            methane_supply:  
+            coal_power_plant:
+            coal_supply:
+            hydrogen_distribution_import:
+            electrolysis:
+            demand_hydrogen:
+
+    NN:
+        coordinates: {lat: 49.64111476113359, lon: 10.661176718500281}
+        techs:
+            hydrogen_supply:
+            hydrogen_distribution_export:
+
+links:
+    N1,N2.techs:
+        ac_ohl_mountain_transmission:
+            constraints:
+            costs.monetary.energy_cap: 51.6  # (10,000 EUR/MW)
+    N1,N3.techs:
+        ac_ohl_mountain_transmission:
+            constraints:
+            costs.monetary.energy_cap: 71.6  # (10,000 EUR/MW)
+    N3,N2.techs:
+        ac_ohl_mountain_transmission:
+            constraints:
+            costs.monetary.energy_cap: 71.6  # (10,000 EUR/MW)
