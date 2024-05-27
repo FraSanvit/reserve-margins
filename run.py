@@ -219,19 +219,6 @@ def update_constraint_sets(model):
                     ]),
                     f" items in {sense} set"
                 )
-                
-    if any(var.startswith("cap_value") for var in model._model_data.data_vars):
-        print("Adding capacity_value_constraint set")
-        model._model_data.coords["loc_tech_cap_value_constraint"] = [
-            loc_techs
-            for loc_techs in model._model_data.loc_techs.values
-            if (model.inputs.cap_value.loc[{"loc_techs": loc_techs}].notnull().all())
-        ]
-
-        print(
-            f"{len(model._model_data.loc_tech_cap_value_constraint)}"
-            " items in set"
-        ) 
         
     return model
 
@@ -265,10 +252,7 @@ def add_eurocalliope_constraints(model, max_fuel_import):
     if any("passenger_car_ev_battery" in tech for tech in model._model_data.techs.values):
         print("Building storage_ev_constraint")
         add_storage_ev_constraint(model)
-    if any(var.startswith("cap_value") for var in model._model_data.data_vars):
-        print("cap_value_constraint is not built - Check run.py file") # testing
-        # print("Building cap_value_constraint")
-        # add_cap_value_constraint(model)
+
 
 def equalizer(lhs, rhs, sign):
     if sign == "max":
@@ -614,27 +598,6 @@ def add_storage_ev_constraint(model):
         _storage_ev_constraint_rule
     )
 
-def add_cap_value_constraint(model):
-    def _cap_value_rule(backend_model, loc_tech, timestep):
-        
-        cap_value = get_param(backend_model, "cap_value", (loc_tech,timestep))
-        
-        if invalid(cap_value):
-            return po.Constraint.Skip
-        
-        loc_tech_carrier = f"{loc_tech}::electricity"
-        carrier_prod = backend_model.carrier_prod[loc_tech_carrier, timestep]
-        timestep_resolution = backend_model.timestep_resolution[timestep]  
-        
-        return carrier_prod <= (
-            backend_model.energy_cap[loc_tech] * timestep_resolution * cap_value
-        )
-        
-    model.backend.add_constraint(
-        "cap_value_constraint",
-        ["loc_tech_cap_value_constraint", "timesteps"],
-        _cap_value_rule
-    )
 
 def add_fuel_import_constraint(model, max_fuel_import):
     def _fuel_import_constraint_rule(backend_model): # max_fuel_import
