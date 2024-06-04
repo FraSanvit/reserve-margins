@@ -1,4 +1,8 @@
 {
-    "python.defaultInterpreterPath": "C:/Users/sanvi/miniconda3/envs/calliope-res-margins",
-    "python.envFile": "C:/Users/sanvi/miniconda3/envs/calliope-res-margins",
-}
+    "cSpell.words": [
+        "ccgt"
+    ]
+} // {
+//     "python.defaultInterpreterPath": "C:\Users\sanvi\miniconda3\envs\calliope-res-margins",
+//     "python.envFile": "C:/Users/sanvi/miniconda3/envs/calliope-res-margins",
+// }
