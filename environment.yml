@@ -4,10 +4,6 @@ channels:
     - default
 dependencies:
     - python=3.7
-    - calliope=0.6.10
-    - pip<=20
-    - netcdf4
-    - setuptools<=60.10
-    - ruamel.yaml<0.18.0
+    - calliope=0.6.11
     - pip:
         - git+https://github.com/FraSanvit/calliope.git@0.6-reserves-margins-fix
