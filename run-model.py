@@ -9,10 +9,7 @@ import calliope
 import create_input
 import run
 
-from dual_utils import duals_to_pickle, load_duals, process_system_balance_duals
-
-import os
-import ntpath
+from dual_utils import duals_to_pickle, load_duals, process_system_balance_duals  # noqa: F401
 
 # SETTINGS
 
